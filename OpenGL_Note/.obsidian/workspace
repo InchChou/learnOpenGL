@@ -1,0 +1,100 @@
+{
+  "main": {
+    "id": "09f5c83453acb3df",
+    "type": "split",
+    "children": [
+      {
+        "id": "0828460008686ed5",
+        "type": "leaf",
+        "active": true,
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "01_光照/光照贴图.md",
+            "mode": "preview"
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "16e2fc669c242b07",
+    "type": "split",
+    "children": [
+      {
+        "id": "249b64a0d3225a8e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d6256371fa9a4a7b",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "e33dfea70684391f",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "8df7dde3ee357284",
+    "type": "split",
+    "children": [
+      {
+        "id": "4246ed4a0508c3f0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fd05904e364e2e3c",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "01_光照/光照贴图.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "lastOpenFiles": [
+    "01_光照/光照贴图.md",
+    "00_入门/复习.md",
+    "01_光照/材质.md",
+    "01_光照/基础光照.md",
+    "01_光照/颜色.md",
+    "Untitled.md",
+    "00_入门/着色器.md",
+    "00_入门/你好，三角形.md",
+    "00_入门/坐标系统.md",
+    "00_入门/变换.md"
+  ]
+}
