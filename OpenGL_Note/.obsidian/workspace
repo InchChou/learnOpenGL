@@ -10,8 +10,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "01_光照/光照贴图.md",
-            "mode": "preview"
+            "file": "高级OpenGL/立方体贴图.md",
+            "mode": "source"
           }
         }
       }
@@ -40,7 +40,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "[[",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "01_光照/光照贴图.md",
+                "file": "高级OpenGL/立方体贴图.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -86,15 +86,15 @@
     "collapsed": true
   },
   "lastOpenFiles": [
-    "01_光照/光照贴图.md",
-    "00_入门/复习.md",
-    "01_光照/材质.md",
-    "01_光照/基础光照.md",
-    "01_光照/颜色.md",
     "Untitled.md",
-    "00_入门/着色器.md",
-    "00_入门/你好，三角形.md",
+    "高级OpenGL/帧缓冲.md",
+    "高级OpenGL/混合.md",
+    "高级OpenGL/面剔除.md",
+    "00_入门/变换.md",
     "00_入门/坐标系统.md",
-    "00_入门/变换.md"
+    "高级OpenGL/模板测试.md",
+    "混合.md",
+    "深度测试.md",
+    "01_光照/材质.md"
   ]
 }
