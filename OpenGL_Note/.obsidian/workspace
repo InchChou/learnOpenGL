@@ -10,7 +10,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "高级OpenGL/立方体贴图.md",
+            "file": "高级OpenGL/几何着色器.md",
             "mode": "source"
           }
         }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "高级OpenGL/立方体贴图.md",
+                "file": "高级OpenGL/几何着色器.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -86,15 +86,15 @@
     "collapsed": true
   },
   "lastOpenFiles": [
+    "几何着色器.md",
     "Untitled.md",
+    "高级OpenGL/高级GLSL.md",
+    "高级OpenGL/立方体贴图.md",
+    "高级OpenGL/面剔除.md",
     "高级OpenGL/帧缓冲.md",
     "高级OpenGL/混合.md",
-    "高级OpenGL/面剔除.md",
     "00_入门/变换.md",
     "00_入门/坐标系统.md",
-    "高级OpenGL/模板测试.md",
-    "混合.md",
-    "深度测试.md",
-    "01_光照/材质.md"
+    "高级OpenGL/模板测试.md"
   ]
 }
