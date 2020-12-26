@@ -10,7 +10,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "高级光照/视差贴图.md",
+            "file": "高级光照/延迟着色法(Deferred Shading).md",
             "mode": "source"
           }
         }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "高级光照/视差贴图.md",
+                "file": "高级光照/延迟着色法(Deferred Shading).md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -86,15 +86,15 @@
     "collapsed": true
   },
   "lastOpenFiles": [
+    "高级光照/延迟着色法(Deferred Shading).md",
+    "01_光照/投光物.md",
+    "Untitled.md",
     "高级光照/视差贴图.md",
     "高级光照/法线贴图.md",
     "高级OpenGL/立方体贴图.md",
     "高级OpenGL/实例化.md",
     "00_入门/你好，三角形.md",
     "高级光照/高级光照.md",
-    "00_入门/着色器.md",
-    "你好，三角形...md",
-    "天空盒.md",
-    "高级OpenGL/高级GLSL.md"
+    "00_入门/着色器.md"
   ]
 }
