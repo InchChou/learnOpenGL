@@ -87,7 +87,7 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
 ```
 
-这给我们了一个线性深度纹理，我们可以用它来对每一个核心样本获取深度值。注意我们把线性深度值存储为了浮点数据；这样从0.1到50.0范围深度值都不会被限制在\[0.0, 1.0\]之间了。如果你不用浮点值存储这些深度数据，确保你首先将值除以`FAR`来标准化它们，再存储到`gPositionDepth`纹理中，并在以后的着色器中用相似的方法重建它们。同样需要注意的是`GL_CLAMP_TO_EDGE`的纹理封装方法。这保证了我们不会不小心采样到在屏幕空间中纹理默认坐标区域之外的深度值。
+这给我们了一个位置纹理，我们可以用它来对每一个核心样本获取深度值。注意我们把位置值存储为了浮点数据；这样位置值就不会被固定到\[0.0,1.0\]，并且我们需要更高的精度。同样需要注意的是`GL_CLAMP_TO_EDGE`的纹理封装方法。这保证了我们不会不小心采样到在屏幕空间中纹理默认坐标区域之外的深度值。
 
 接下来我们需要真正的半球采样核心和一些方法来随机旋转它。
 
@@ -221,7 +221,7 @@ glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 RenderQuad();
 ```
 
-`shaderSSAO`这个着色器将对应G缓冲纹理(包括线性深度)，噪声纹理和法向半球核心样本作为输入参数：
+`shaderSSAO`这个着色器将G缓冲纹理(包括线性深度)，噪声纹理和法向半球核心样本作为输入参数：
 ```
 #version 330 core
 out float FragColor;
@@ -251,7 +251,7 @@ vec3 fragPos   = texture(gPosition, TexCoords).xyz;
 vec3 normal    = texture(gNormal, TexCoords).rgb;
 vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;
 ```
-由于我们将`texNoise`的平铺参数设置为`GL_REPEAT`，随机的值将会在全屏不断重复。加上`fragPog`和`normal`向量，我们就有足够的数据来创建一个TBN矩阵，将向量从切线空间变换到观察空间。
+由于我们将`texNoise`的平铺参数设置为`GL_REPEAT`，随机的值将会在全屏不断重复。加上`fragPos`和`normal`向量，我们就有足够的数据来创建一个TBN矩阵，将向量从切线空间变换到观察空间。
 
 ```
 vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
@@ -259,6 +259,7 @@ vec3 bitangent = cross(normal, tangent);
 mat3 TBN       = mat3(tangent, bitangent, normal);
 ```
 通过使用一个叫做==Gramm-Schmidt处理(Gramm-Schmidt Process)==的过程，我们创建了一个**正交基**(Orthogonal Basis)，每一次它都会根据`randomVec`的值稍微倾斜。注意因为我们使用了一个随机向量来构造切线向量，我们没必要有一个恰好沿着几何体表面的TBN矩阵，也就是不需要逐顶点切线(和双切)向量。
+> 此时的`normal`变量已被标准化，即$|\vec {normal}| = 1$，此时计算施密特正交化较为方便。算出来的TBN矩阵，N方向就是法线方向，T方向是垂直于法线指向$\vec {randomVec}$方向。
 
 接下来我们对每个核心样本进行迭代，将样本从切线空间变换到观察空间，将它们加到当前像素位置上，并将片段位置深度与储存在原始深度缓冲中的样本深度进行比较。我们来一步步讨论它：
 ```
@@ -272,9 +273,9 @@ for(int i = 0; i < kernelSize; ++i)
     [...]
 }
 ```
-这里的`kernelSize`和`radius`变量都可以用来调整效果；在这里我们分别保持他们的默认值为`64`和`1.0`。对于每一次迭代我们首先变换各自样本到观察空间。之后我们会加观察空间核心偏移样本到观察空间片段位置上；最后再用`radius`乘上偏移样本来增加(或减少)SSAO的有效取样半径。
+这里的`kernelSize`和`radius`变量都可以用来调整效果；在这里我们分别保持他们的默认值为`64`和`1.0`。对于每一次迭代我们首先**变换各样本到观察空间**。之后我们会加观察空间核心偏移样本到观察空间片段位置上；最后再用`radius`乘上偏移样本来增加(或减少)SSAO的有效取样半径。
 
-接下来我们变换`sample`到屏幕空间，从而我们可以就像正在直接渲染它的位置到屏幕上一样取样`sample`的(线性)深度值。由于这个向量目前在观察空间，我们将首先使用`projection`矩阵uniform变换它到裁剪空间。
+接下来我们变换`sample`到屏幕空间，从而我们可以就像正在直接渲染它的位置到屏幕上一样取样`sample`的(线性)深度值。由于这个向量目前在观察空间，我们将首先使用uniform类型的矩阵`projection`变换它到裁剪空间。
 ```
 vec4 offset = vec4(samplePos, 1.0);
 offset      = projection * offset;    // 观察->裁剪空间
@@ -282,15 +283,17 @@ offset.xyz /= offset.w;               // 透视除法
 offset.xyz  = offset.xyz * 0.5 + 0.5; // 变换到0.0 - 1.0的值域
 ```
 
-在变量被变换到裁剪空间之后，我们用`xyz`分量除以`w`分量进行透视出发。得到的标准化设备坐标随后变换到**\[0.0, 1.0\]** 范围以便我们使用它们去取样深度纹理：
+在变量被变换到裁剪空间之后，我们用`xyz`分量除以`w`分量进行透视除法。得到的标准化设备坐标随后变换到**\[0.0, 1.0\]** 范围以便我们使用它们去**取样**深度纹理：
 ```
-float sampleDepth = -texture(gPosition, offset.xy).w;
+float sampleDepth = texture(gPosition, offset.xy).z;
 ```
 
-我们使用`offset`向量的`x`和`y`分量采样线性深度纹理从而获取样本位置从观察者视角的深度值(第一个不被遮蔽的可见片段)。我们接下来检查样本的当前深度值是否大于存储的深度值，如果是的，添加到最终的贡献因子上。
+我们使用`offset`向量的`x`和`y`分量从**观察者视角**采样位置纹理从而获取样本位置的深度值(第一个不被遮蔽的可见片段)。我们接下来检查样本的当前深度值是否大于存储的深度值，如果是的，添加到最终的贡献因子上。
 ```
 occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0);
 ```
+
+> 在几何处理阶段，我们生成的`FragPos`位置纹理为片段在**观察空间**中的位置，`Normal`法线纹理也为观察空间中的法线。取样出来的`sampleDepth`是样本投影到屏幕后，从位置纹理中取样得到的片段在观察空间中的`z`值。为了比较当前样本的深度值，也需要将样本的位置转换到观察空间，在之前的加粗文字”**变换各样本到观察空间**“这一小段中，即使在将样本偏移量转换到观察空间后再加上（处于观察空间中的）片段的位置，所得的样本位置就是在观察中间中的。所以`sampleDepth >= samplePos.z`比较是在观察空间中的比较。如果`sampleDepth`大于`samplePos.z`，表明样本的位置比当前表面更深，即被遮蔽（occlusion）住了。
 
 注意我们在原片段深度值上面加上了一个小小的偏移`bias`（比如设成0.025）。偏移值不总是必要的，但它有助于从视觉上调整SSAO效果并解决由于场景的复杂性导致可能的毛刺效果。
 

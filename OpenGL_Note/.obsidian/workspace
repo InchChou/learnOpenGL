@@ -10,7 +10,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "高级光照/延迟着色法(Deferred Shading).md",
+            "file": "PBR/光照.md",
             "mode": "source"
           }
         }
@@ -40,7 +40,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "[[",
+                "query": "align",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "高级光照/延迟着色法(Deferred Shading).md",
+                "file": "PBR/光照.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -86,15 +86,15 @@
     "collapsed": true
   },
   "lastOpenFiles": [
-    "高级光照/延迟着色法(Deferred Shading).md",
-    "01_光照/投光物.md",
+    "PBR/光照.md",
+    "01_光照/材质.md",
+    "高级光照/Gamma校正.md",
+    "PBR/理论.md",
     "Untitled.md",
-    "高级光照/视差贴图.md",
+    "理论.md",
+    "高级光照/延迟着色法(Deferred Shading).md",
     "高级光照/法线贴图.md",
-    "高级OpenGL/立方体贴图.md",
-    "高级OpenGL/实例化.md",
-    "00_入门/你好，三角形.md",
-    "高级光照/高级光照.md",
-    "00_入门/着色器.md"
+    "高级光照/SSAO.md",
+    "高级光照/点光源阴影.md"
   ]
 }
