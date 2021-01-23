@@ -39,7 +39,7 @@ Gamma校正(Gamma Correction)的思路是**在最终的颜色输出上应用监�
 
 开启`GL_FRAMEBUFFER_SRGB`只需要简单的调用`glEnable`就行：
 
-```
+```c++
 glEnable(GL_FRAMEBUFFER_SRGB);
 ```
 
@@ -47,7 +47,7 @@ glEnable(GL_FRAMEBUFFER_SRGB);
 
 第二个方法稍微复杂点，但同时也是我们对gamma操作有完全的控制权。我们在每个相关片段着色器运行的最后应用gamma校正，所以在发送到帧缓冲前，颜色就被校正了。
 
-```
+```glsl
 void main()
 {
     // do super fancy lighting 
@@ -76,7 +76,7 @@ void main()
 
 另一个解决方案是重校，或把这些sRGB纹理在进行任何颜色值的计算前变回线性空间。我们可以这样做：
 
-```
+```glsl
 float gamma = 2.2;
 vec3 diffuseColor = pow(texture(diffuse, texCoords).rgb, vec3(gamma));
 ```
@@ -85,7 +85,7 @@ vec3 diffuseColor = pow(texture(diffuse, texCoords).rgb, vec3(gamma));
 
 如果我们在OpenGL中创建了一个纹理，把它指定为以上两种sRGB纹理格式其中之一，OpenGL将自动把颜色校正到线性空间中，这样我们所使用的所有颜色值都是在线性空间中的了。我们可以这样把一个纹理指定为一个sRGB纹理：
 
-```
+```c++
 glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 ```
 
@@ -98,13 +98,13 @@ glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BY
 ## 衰减
 在使用了gamma校正之后，另一个不同之处是光照衰减(Attenuation)。真实的物理世界中，光照的衰减和光源的距离的平方成反比。
 
-```
+```glsl
 float attenuation = 1.0 / (distance * distance);
 ```
 
 然而，当我们使用这个衰减公式的时候，衰减效果总是过于强烈，光只能照亮一小圈，看起来并不真实。出于这个原因，我们使用在[基础光照](基础光照)教程中所讨论的那种衰减方程，它给了我们更大的控制权，或者是我们还可以使用线性函数：
 
-```
+```glsl
 float attenuation = 1.0 / distance;
 ```
 

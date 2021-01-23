@@ -42,7 +42,7 @@ SSAO需要获取几何体的信息，因为我们需要一些方式来确定一�
 > 在这个教程中，我们将会在一个简化版本的延迟渲染器( [延迟着色法](obsidian://open?vault=OpenGL_Note&file=%E9%AB%98%E7%BA%A7%E5%85%89%E7%85%A7%2F%E5%BB%B6%E8%BF%9F%E7%9D%80%E8%89%B2%E6%B3%95(Deferred%20Shading))教程中)的基础上实现SSAO，所以如果你不知道什么是延迟着色法，请先读完那篇教程。
 
 由于我们已经有了逐片段位置和法线数据(G缓冲中)，我们只需要更新一下几何着色器，让它包含片段的线性深度就行了。回忆我们在深度测试那一节学过的知识，我们可以从`gl_FragCoord.z`中提取线性深度：
-```
+```glsl
 #version 330 core
 layout (location = 0) out vec4 gPosition;
 layout (location = 1) out vec3 gNormal;
@@ -77,7 +77,7 @@ void main()
 > 通过一些小技巧来通过深度值重构实际位置值是可能的，Matt Pettineo在他的[博客](https://mynameismjp.wordpress.com/2010/09/05/position-from-depth-3/)里提到了这一技巧。这一技巧需要在着色器里进行一些计算，但是省了我们在G缓冲中存储位置数据，从而省了很多内存。为了示例的简单，我们将不会使用这些优化技巧，你可以自行探究。
 
 `gPosition`颜色缓冲纹理被设置成了下面这样：
-```
+```c++
 glGenTextures(1, &gPosition);
 glBindTexture(GL_TEXTURE_2D, gPosition);
 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -96,7 +96,7 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 ![](https://learnopengl-cn.github.io/img/05/09/ssao_hemisphere.png)
 
 假设我们有一个单位半球，我们可以获得一个拥有最大64样本值的采样核心：
-```
+```c++
 std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // 随机浮点数，范围0.0 - 1.0
 std::default_random_engine generator;
 std::vector<glm::vec3> ssaoKernel;
@@ -116,7 +116,7 @@ for (unsigned int i = 0; i < 64; ++i)
 我们在切线空间中以-1.0到1.0为范围变换x和y方向，并以0.0和1.0为范围变换样本的z方向(如果以-1.0到1.0为范围，取样核心就变成球型了)。由于采样核心将会沿着表面法线对齐，所得的样本矢量将会在半球里。
 
 目前，所有的样本都是平均分布在采样核心里的，但是我们更愿意将更多的注意放在靠近真正片段的遮蔽上，也就是将核心样本靠近原点分布。我们可以用一个加速插值函数实现它：
-```
+```c++
    ...[接上函数]
    float scale = (float)i / 64.0; 
    scale   = lerp(0.1f, 1.0f, scale * scale);
@@ -126,7 +126,7 @@ for (unsigned int i = 0; i < 64; ++i)
 ```
 
 `lerp`被定义为：
-```
+```c++
 float lerp(float a, float b, float f)
 {
     return a + f * (b - a);
@@ -142,7 +142,7 @@ float lerp(float a, float b, float f)
 通过引入一些随机性到采样核心上，我们可以大大减少获得不错结果所需的样本数量。我们可以对场景中每一个片段创建一个随机旋转向量，但这会很快将内存耗尽。所以，更好的方法是创建一个小的随机旋转向量纹理平铺在屏幕上。
 
 我们创建一个4x4朝向切线空间平面法线的随机旋转向量数组：
-```
+```c++
 std::vector<glm::vec3> ssaoNoise;
 for (unsigned int i = 0; i < 16; i++)
 {
@@ -157,7 +157,7 @@ for (unsigned int i = 0; i < 16; i++)
 由于采样核心是沿着正z方向在切线空间内旋转，我们设定z分量为0.0，从而围绕z轴旋转。
 
 我们接下来创建一个包含随机旋转向量的4x4纹理；记得设定它的封装方法为`GL_REPEAT`，从而保证它合适地平铺在屏幕上。
-```
+```c++
 unsigned int noiseTexture; 
 glGenTextures(1, &noiseTexture);
 glBindTexture(GL_TEXTURE_2D, noiseTexture);
@@ -172,7 +172,7 @@ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 ## SSAO着色器
 SSAO着色器在2D的铺屏四边形上运行，它对于每一个生成的片段计算遮蔽值(为了在最终的光照着色器中使用)。由于我们需要存储SSAO阶段的结果，我们还需要在创建一个帧缓冲对象：
-```
+```c++
 unsigned int ssaoFBO;
 glGenFramebuffers(1, &ssaoFBO);  
 glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
@@ -190,7 +190,7 @@ glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssao
 由于环境遮蔽的结果是一个灰度值，我们将只需要纹理的红色分量，所以我们将颜色缓冲的内部格式设置为`GL_RED`。
 
 渲染SSAO完整的过程会像这样：
-```
+```c++
 // 几何处理阶段: 渲染到G缓冲中
 glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
     [...]
@@ -222,7 +222,7 @@ RenderQuad();
 ```
 
 `shaderSSAO`这个着色器将G缓冲纹理(包括线性深度)，噪声纹理和法向半球核心样本作为输入参数：
-```
+```glsl
 #version 330 core
 out float FragColor;
   
@@ -246,14 +246,14 @@ void main()
 
 注意我们这里有一个`noiseScale`的变量。我们想要将噪声纹理**平铺**(Tile)在屏幕上，但是由于`TexCoords`的取值在0.0和1.0之间，`texNoise`纹理将不会平铺。所以我们将通过屏幕分辨率除以噪声纹理大小的方式计算`TexCoords`的缩放大小，并在之后提取相关输入向量的时候使用。
 
-```
+```glsl
 vec3 fragPos   = texture(gPosition, TexCoords).xyz;
 vec3 normal    = texture(gNormal, TexCoords).rgb;
 vec3 randomVec = texture(texNoise, TexCoords * noiseScale).xyz;
 ```
 由于我们将`texNoise`的平铺参数设置为`GL_REPEAT`，随机的值将会在全屏不断重复。加上`fragPos`和`normal`向量，我们就有足够的数据来创建一个TBN矩阵，将向量从切线空间变换到观察空间。
 
-```
+```glsl
 vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
 vec3 bitangent = cross(normal, tangent);
 mat3 TBN       = mat3(tangent, bitangent, normal);
@@ -262,7 +262,7 @@ mat3 TBN       = mat3(tangent, bitangent, normal);
 > 此时的`normal`变量已被标准化，即$|\vec {normal}| = 1$，此时计算施密特正交化较为方便。算出来的TBN矩阵，N方向就是法线方向，T方向是垂直于法线指向$\vec {randomVec}$方向。
 
 接下来我们对每个核心样本进行迭代，将样本从切线空间变换到观察空间，将它们加到当前像素位置上，并将片段位置深度与储存在原始深度缓冲中的样本深度进行比较。我们来一步步讨论它：
-```
+```glsl
 float occlusion = 0.0;
 for(int i = 0; i < kernelSize; ++i)
 {
@@ -276,7 +276,7 @@ for(int i = 0; i < kernelSize; ++i)
 这里的`kernelSize`和`radius`变量都可以用来调整效果；在这里我们分别保持他们的默认值为`64`和`1.0`。对于每一次迭代我们首先**变换各样本到观察空间**。之后我们会加观察空间核心偏移样本到观察空间片段位置上；最后再用`radius`乘上偏移样本来增加(或减少)SSAO的有效取样半径。
 
 接下来我们变换`sample`到屏幕空间，从而我们可以就像正在直接渲染它的位置到屏幕上一样取样`sample`的(线性)深度值。由于这个向量目前在观察空间，我们将首先使用uniform类型的矩阵`projection`变换它到裁剪空间。
-```
+```glsl
 vec4 offset = vec4(samplePos, 1.0);
 offset      = projection * offset;    // 观察->裁剪空间
 offset.xyz /= offset.w;               // 透视除法
@@ -284,12 +284,12 @@ offset.xyz  = offset.xyz * 0.5 + 0.5; // 变换到0.0 - 1.0的值域
 ```
 
 在变量被变换到裁剪空间之后，我们用`xyz`分量除以`w`分量进行透视除法。得到的标准化设备坐标随后变换到**\[0.0, 1.0\]** 范围以便我们使用它们去**取样**深度纹理：
-```
+```glsl
 float sampleDepth = texture(gPosition, offset.xy).z;
 ```
 
 我们使用`offset`向量的`x`和`y`分量从**观察者视角**采样位置纹理从而获取样本位置的深度值(第一个不被遮蔽的可见片段)。我们接下来检查样本的当前深度值是否大于存储的深度值，如果是的，添加到最终的贡献因子上。
-```
+```glsl
 occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0);
 ```
 
@@ -302,7 +302,7 @@ occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0);
 ![](https://learnopengl-cn.github.io/img/05/09/ssao_range_check.png)
 
 我们引入一个范围测试从而保证我们只当被测深度值在取样半径内时影响遮蔽因子。将代码最后一行换成：
-```
+```glsl
 float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
 occlusion       += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
 ```
@@ -313,7 +313,7 @@ occlusion       += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
 如果我们使用一个在深度值在`radius`之外就突然移除遮蔽贡献的硬界限范围检测(Hard Cut-off Range Check)，我们将会在范围检测应用的地方看见一个明显的(很难看的)边缘。
 
 最后一步，我们需要将遮蔽贡献根据核心的大小标准化，并输出结果。注意我们用1.0减去了遮蔽因子，以便直接使用遮蔽因子去缩放环境光照分量。
-```
+```glsl
 }
 occlusion = 1.0 - (occlusion / kernelSize);
 FragColor = occlusion;
@@ -329,7 +329,7 @@ FragColor = occlusion;
 ## 环境遮蔽模糊
 在SSAO阶段和光照阶段之间，我们想要进行模糊SSAO纹理的处理，所以我们又创建了一个帧缓冲对象来储存模糊结果。
 
-```
+```c++
 unsigned int ssaoBlurFBO, ssaoColorBufferBlur;
 glGenFramebuffers(1, &ssaoBlurFBO);
 glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
@@ -342,7 +342,7 @@ glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssao
 ```
 
 由于平铺的随机向量纹理保持了一致的随机性，我们可以使用这一性质来创建一个简单的模糊着色器：
-```
+```glsl
 #version 330 core
 out float FragColor;
   
@@ -372,7 +372,7 @@ void main() {
 
 ## 应用环境遮蔽
 应用遮蔽因子到光照方程中极其简单：我们要做的只是将逐片段环境遮蔽因子乘到光照环境分量上。如果我们使用上个教程中的Blinn-Phong延迟光照着色器并做出一点修改，我们将会得到下面这个片段着色器：
-```
+```glsl
 #version 330 core
 out vec4 FragColor;
   
@@ -429,7 +429,7 @@ void main()
 屏幕空间环境遮蔽是一个可高度自定义的效果，它的效果很大程度上依赖于我们根据场景类型调整它的参数。对所有类型的场景并不存在什么完美的参数组合方式。一些场景只在小半径情况下工作，又有些场景会需要更大的半径和更大的样本数量才能看起来更真实。当前这个演示用了64个样本，属于比较多的了，你可以调调更小的核心大小从而获得更好的结果。
 
 一些你可以调整(比如说通过uniform)的参数：核心大小，半径和/或噪声核心的大小。你也可以提升最终的遮蔽值到一个用户定义的幂从而增加它的强度：
-```
+```glsl
 occlusion = 1.0 - (occlusion / kernelSize);
 FragColor = pow(occlusion, power);
 ```

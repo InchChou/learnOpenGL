@@ -31,14 +31,14 @@ Bloom和[HDR](HDR)结合使用效果很好。常见的一个误解是HDR和泛�
 ## 提取亮色
 第一步我们要从渲染出来的场景中提取两张图片。我们可以渲染场景两次，每次使用一个不同的着色器渲染到不同的帧缓冲中，但我们可以使用一个叫做==MRT（Multiple Render Targets，多渲染目标）==的小技巧，这样我们就能指定多个片段着色器输出；有了它我们还能够在一个单独渲染处理中提取头两个图片。在片段着色器的输出前，我们指定一个布局location标识符，这样我们便可控制一个片段着色器写入到哪个颜色缓冲：
 
-```
+```glsl
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BrightColor;  
 ```
 
 只有我们确实具有多个缓冲区可写的时候才能工作。使用多个片段着色器输出的必要条件是，有多个颜色缓冲附加到了当前绑定的帧缓冲对象上。你可能从[帧缓冲](帧缓冲)教程那里回忆起，当把一个纹理链接到帧缓冲的颜色缓冲上时，我们可以指定一个颜色附件。直到现在，我们一直使用着`GL_COLOR_ATTACHMENT0`，但通过使用`GL_COLOR_ATTACHMENT1`，我们可以得到一个附加了两个颜色缓冲的帧缓冲对象：
 
-```
+```c++
 // set up floating point framebuffer to render scene to
 unsigned int hdrFBO;
 glGenFramebuffers(1, &hdrFBO);
@@ -64,14 +64,14 @@ for (unsigned int i = 0; i < 2; i++)
 
 我们需要显式告知OpenGL我们正在通过`glDrawBuffers`渲染到多个颜色缓冲，否则OpenGL只会渲染到帧缓冲的第一个颜色附件，而忽略所有其他的。我们可以通过传递多个颜色附件的枚举来做这件事，我们以下面的操作进行渲染：
 
-```
+```c++
 unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 glDrawBuffers(2, attachments);
 ```
 
 当渲染到这个帧缓冲的时候，一个着色器使用一个布局location修饰符，fragment就会写入对应的颜色缓冲。这很棒，因为这样省去了我们为提取明亮区域的额外渲染步骤，因为我们现在可以直接从将被渲染的fragment提取出它们：
 
-```
+```glsl
 #version 330 core
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BrightColor;
@@ -114,7 +114,7 @@ void main()
 这意味着我们如果对一个图像进行模糊处理，至少需要两步，最好使用帧缓冲对象做这件事。具体来说，我们将实现**乒乓帧缓冲**来实现高斯模糊。它的意思是，有一对帧缓冲，我们把另一个帧缓冲的颜色缓冲放进当前的帧缓冲的颜色缓冲中，使用不同的着色效果渲染指定的次数。基本上就是不断地切换帧缓冲和纹理去绘制。这样我们先在场景纹理的第一个缓冲中进行模糊，然后在把第一个帧缓冲的颜色缓冲放进第二个帧缓冲进行模糊，接着，将第二个帧缓冲的颜色缓冲放进第一个，循环往复。
 
 在我们研究帧缓冲之前，先讨论高斯模糊的片段着色器：
-```
+```glsl
 #version 330 core
 out vec4 FragColor;
 
@@ -152,7 +152,7 @@ void main()
 这里我们使用一个比较小的高斯权重做例子，每次我们用它来指定当前fragment的水平或垂直样本的特定权重。你会发现我们基本上是将模糊过滤器根据我们在uniform变量`horizontal`设置的值分割为一个水平和一个垂直部分。通过用1.0除以纹理的大小（`从textureSize`得到一个`vec2`）得到一个纹理像素的实际大小，以此作为偏移距离的根据。
 
 我们为图像的模糊处理创建两个基本的帧缓冲，每个只有一个颜色缓冲纹理：
-```
+```c++
 unsigned int pingpongFBO[2];
 unsigned int pingpongBuffer[2];
 glGenFramebuffers(2, pingpongFBO);
@@ -175,7 +175,7 @@ for (unsigned int i = 0; i < 2; i++)
 ```
 
 得到一个HDR纹理后，我们用提取出来的亮区纹理填充一个帧缓冲，然后对其模糊处理10次（5次垂直5次水平）：
-```
+```c++
 bool horizontal = true, first_iteration = true;
 int amount = 10;
 shaderBlur.use();
@@ -204,7 +204,7 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0);
 ## 把两个纹理混合
 有了场景的HDR纹理和模糊处理的亮区纹理，我们只需把它们结合起来就能实现泛光或称光晕效果了。最终的片段着色器（大部分和HDR教程用的差不多）要把两个纹理混合：
 
-```
+```glsl
 #version 330 core
 out vec4 FragColor;
 

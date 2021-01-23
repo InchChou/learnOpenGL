@@ -26,7 +26,7 @@ HDR渲染和其很相似，我们允许用更大范围的颜色值渲染从而�
 
 想要创建一个浮点帧缓冲，我们只需要改变颜色缓冲的内部格式参数就行了（注意`GL_FLOAT`参数)：
 
-```
+```c++
 glBindTexture(GL_TEXTURE_2D, colorBuffer);
 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
 ```
@@ -35,7 +35,7 @@ glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL
 
 有了一个带有浮点颜色缓冲的帧缓冲，我们可以放心渲染场景到这个帧缓冲中。在这个教程的例子当中，我们先渲染一个光照的场景到浮点帧缓冲中，之后再在一个铺屏四边形(Screen-filling Quad)上应用这个帧缓冲的颜色缓冲，代码会是这样子：
 
-```
+```c++
 glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 // [...] 渲染(光照的)场景
@@ -50,7 +50,7 @@ RenderQuad();
 
 这里场景的颜色值存在一个可以包含任意颜色值的浮点颜色缓冲中，值可能是超过1.0的。这个简单的演示中，场景被创建为一个被拉伸的立方体通道和四个点光源，其中一个非常亮的在隧道的尽头：
 
-```
+```c++
 std::vector<glm::vec3> lightColors;
 lightColors.push_back(glm::vec3(200.0f, 200.0f, 200.0f));
 lightColors.push_back(glm::vec3(0.1f, 0.0f, 0.0f));
@@ -60,7 +60,7 @@ lightColors.push_back(glm::vec3(0.0f, 0.1f, 0.0f));
 
 渲染至浮点帧缓冲和渲染至一个普通的帧缓冲是一样的。新的东西就是这个`hdrShader`的片段着色器，用来渲染最终拥有浮点颜色缓冲纹理的2D四边形。我们来定义一个简单的直通片段着色器(Pass-through Fragment Shader)：
 
-```
+```glsl
 #version 330 core
 out vec4 color;
 in vec2 TexCoords;
@@ -84,7 +84,7 @@ void main()
 
 最简单的色调映射算法是Reinhard色调映射，它涉及到分散整个HDR颜色值到LDR颜色值上，所有的值都有对应。Reinhard色调映射算法平均地将所有亮度值分散到LDR上。我们将Reinhard色调映射应用到之前的片段着色器上，并且为了更好的测量加上一个Gamma校正过滤(包括SRGB纹理的使用)：
 
-```
+```glsl
 void main()
 {
     const float gamma = 2.2;
@@ -109,7 +109,7 @@ void main()
 
 一个简单的曝光色调映射算法会像这样：
 
-```
+```glsl
 uniform float exposure;
 
 void main()
