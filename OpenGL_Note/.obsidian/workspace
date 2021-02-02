@@ -10,8 +10,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "PBR/理论.md",
-            "mode": "preview"
+            "file": "文本渲染.md",
+            "mode": "source"
           }
         }
       }
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "PBR/理论.md",
+                "file": "文本渲染.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -86,15 +86,15 @@
     "collapsed": true
   },
   "lastOpenFiles": [
+    "文本渲染.md",
+    "Untitled.md",
+    "PBR/IBL/镜面反射 IBL.md",
     "PBR/理论.md",
     "PBR/光照.md",
+    "PBR/IBL/漫反射辐照度.md",
     "高级OpenGL/帧缓冲.md",
     "高级光照/SSAO.md",
     "高级光照/HDR.md",
-    "高级光照/Gamma校正.md",
-    "00_入门/坐标系统.md",
-    "00_入门/着色器.md",
-    "01_光照/颜色.md",
-    "高级光照/延迟着色法(Deferred Shading).md"
+    "高级光照/Gamma校正.md"
   ]
 }
