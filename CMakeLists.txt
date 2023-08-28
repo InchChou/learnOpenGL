@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.24)
 
 set(APP_NAME openGLHello)
 project(${APP_NAME})
@@ -10,15 +10,27 @@ get_filename_component(TOP_WORK_DIR ${CUR_DIR} ABSOLUTE)
 # 使用 C++ 11 标准
 set(CMAKE_CXX_STANDARD 11)
 
+
+# 设置编译源文件
+file(GLOB_RECURSE SRC_FILES
+    ${TOP_WORK_DIR}/source/*.c
+    ${TOP_WORK_DIR}/source/*.cpp)
+
+# 设置目标，为可执行文件
+add_executable(${APP_NAME} ${SRC_FILES})
+
 # 添加头文件
-include_directories(
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
     ${TOP_WORK_DIR}
     ${TOP_WORK_DIR}/glfw-3.3.2.bin.WIN32/include
     ${TOP_WORK_DIR}/include
 )
 
 # 添加目标链接
-link_libraries(${TOP_WORK_DIR}/glfw-3.3.2.bin.WIN32/lib-mingw/libglfw3.a
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+    ${TOP_WORK_DIR}/glfw-3.3.2.bin.WIN32/lib-mingw/libglfw3.a
     opengl32.lib
 )
 
@@ -33,12 +45,22 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(D d)
 endif()
 
-# 设置编译源文件，执行编译命令
-file(GLOB_RECURSE SRC_FILES
-    ${TOP_WORK_DIR}/source/*.c
-    ${TOP_WORK_DIR}/source/*.cpp)
-
-add_executable(${APP_NAME} ${SRC_FILES})
-
 # 链接必要的库
-# target_link_libraries(${APP_NAME} PUBLIC -lGLEW -lX11 -lpthread -lXrandr -lXi)
+# target_link_libraries(${APP_NAME} PUBLIC -lX11 -lpthread -lXrandr -lXi)
+
+
+###########################################################
+# 如果是vulkan为api，则需要添加如下的命令并删除opengl相关的命令
+## Vulkan
+#find_package(Vulkan REQUIRED)
+## 添加头文件
+#target_include_directories(${PROJECT_NAME}
+#    PRIVATE
+#    Vulkan::Headers
+#)
+#
+## 添加目标链接
+#target_link_libraries(${PROJECT_NAME}
+#    PRIVATE
+#    Vulkan::Vulkan
+#)
